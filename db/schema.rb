@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_04_09_180531) do
+ActiveRecord::Schema.define(version: 2021_04_09_213522) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -46,6 +46,7 @@ ActiveRecord::Schema.define(version: 2021_04_09_180531) do
   create_table "avatars", force: :cascade do |t|
     t.string "url", null: false
     t.string "name", null: false
+    t.integer "user_id", null: false
     t.boolean "verified", default: false, null: false
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
@@ -60,12 +61,20 @@ ActiveRecord::Schema.define(version: 2021_04_09_180531) do
     t.datetime "updated_at", precision: 6, null: false
   end
 
+  create_table "colors_recipes", id: false, force: :cascade do |t|
+    t.bigint "color_id", null: false
+    t.bigint "recipe_id", null: false
+    t.index ["color_id"], name: "index_colors_recipes_on_color_id"
+    t.index ["recipe_id"], name: "index_colors_recipes_on_recipe_id"
+  end
+
   create_table "packages", force: :cascade do |t|
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
   end
 
   create_table "recipes", force: :cascade do |t|
+    t.integer "user_id", null: false
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
   end
@@ -73,9 +82,7 @@ ActiveRecord::Schema.define(version: 2021_04_09_180531) do
   create_table "users", force: :cascade do |t|
     t.string "username", null: false
     t.string "password_digest", null: false
-    t.integer "avatar_id", default: -1
     t.json "flags", default: {}, null: false
-    t.json "packages", default: {}, null: false
     t.boolean "is_admin", default: false, null: false
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
