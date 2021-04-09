@@ -68,6 +68,7 @@ GEM
     concurrent-ruby (1.1.8)
     crass (1.0.6)
     diff-lcs (1.4.4)
+    dotenv (2.7.6)
     erubi (1.10.0)
     ffi (1.15.0)
     globalid (0.4.2)
@@ -95,6 +96,7 @@ GEM
     nokogiri (1.11.3-x86_64-linux)
       racc (~> 1.4)
     pg (1.2.3)
+    profanity_filter (0.1.1)
     pry (0.14.0)
       coderay (~> 1.1)
       method_source (~> 1.0)
@@ -181,9 +183,11 @@ PLATFORMS
 DEPENDENCIES
   bcrypt (~> 3.1.7)
   bootsnap (>= 1.4.4)
+  dotenv (~> 2.7, >= 2.7.6)
   image_processing (~> 1.2)
   listen (~> 3.3)
   pg (~> 1.1)
+  profanity_filter (~> 0.1.1)
   pry
   puma (~> 5.0)
   rack-cors
