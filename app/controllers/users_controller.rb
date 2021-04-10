@@ -1,6 +1,8 @@
 class UsersController < ApplicationController
   before_action :set_user, only: [:show, :update, :destroy]
 
+  # RESTful routes
+
   # GET /users
   def index
     @users = User.all
@@ -18,7 +20,12 @@ class UsersController < ApplicationController
     @user = User.new(user_params)
 
     if @user.save
-      render json: @user, status: :created, location: @user
+      session[:user_id] = @user.id
+
+      render json: {
+        user: @user,
+        token: encoded_token,
+      }, status: :created, location: @user
     else
       render json: @user.errors, status: :unprocessable_entity
     end
@@ -38,6 +45,24 @@ class UsersController < ApplicationController
     @user.destroy
   end
 
+  # non-RESTful routes
+
+  # POST /login
+  def login
+    @user = User.find_by_username_or_email(user_params[:usernameOrEmail])
+
+    if @user && @user.authenticate(user_params[:password])
+      session[:user_id] = @user.id
+
+      render json: {
+        user: @user,
+        token: encoded_token,
+      }, status: :ok
+    else
+      render json: ['User not found'], status: :unprocessable_entity
+    end
+  end
+
   private
     # Use callbacks to share common setup or constraints between actions.
     def set_user
@@ -46,6 +71,6 @@ class UsersController < ApplicationController
 
     # Only allow a list of trusted parameters through.
     def user_params
-      params.require(:user).permit(:username, :password, :flags, :is_admin)
+      params.require(:user).permit(:username, :email, :usernameOrEmail, :password, :flags, :is_admin)
     end
 end

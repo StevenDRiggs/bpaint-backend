@@ -25,11 +25,11 @@ gem 'bootsnap', '>= 1.4.4', require: false
 # Use Rack CORS for handling Cross-Origin Resource Sharing (CORS), making cross-origin AJAX possible
 gem 'rack-cors'
 
-# retrieve ENV variables from .env
-gem 'dotenv', '~> 2.7', '>= 2.7.6'
-
 # cardinalblue's profanity filter
 gem 'profanity-filter', '~> 1.0'
+
+# JWt for user integrity
+gem 'jwt'
 
 group :development, :test do
   # Call 'binding.pry' anywhere in the code to stop execution and get a debugger console
@@ -39,6 +39,8 @@ group :development, :test do
   gem 'rspec-rails', '~> 5.0.0'
   # generate fake data for testing
   gem 'faker', '~> 2.17'
+  # retrieve ENV variables from .env
+  gem 'dotenv', '~> 2.7', '>= 2.7.6'
 end
 
 group :development do
