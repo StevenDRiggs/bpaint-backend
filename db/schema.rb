@@ -76,6 +76,7 @@ ActiveRecord::Schema.define(version: 2021_04_09_213522) do
 
   create_table "recipes", force: :cascade do |t|
     t.integer "user_id", null: false
+    t.integer "package_id", null: false
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
   end
