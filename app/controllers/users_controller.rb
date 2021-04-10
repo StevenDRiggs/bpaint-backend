@@ -5,10 +5,10 @@ class UsersController < ApplicationController
 
   # GET /users
   def index
-    if User.find(decoded_token[:user_id]).is_admin
+    if admin?
       @users = User.all
 
-      render json: @users, status: :ok
+      render json: @users
     else
       render json: ['Must be logged in as admin'], status: :forbidden
     end
@@ -16,7 +16,11 @@ class UsersController < ApplicationController
 
   # GET /users/1
   def show
-    render json: @user
+    if admin? || (logged_in? && params[:id].to_i == decoded_token[:user_id])
+      render json: @user
+    else
+      render json: ['Must be logged in as admin'], status: :forbidden
+    end
   end
 
   # POST /users
@@ -72,5 +76,10 @@ class UsersController < ApplicationController
     # Only allow a list of trusted parameters through.
     def user_params
       params.require(:user).permit(:username, :email, :usernameOrEmail, :password, :flags, :is_admin)
+    end
+
+    # verify @user.is_admin and logged in for certain functions
+    def admin?
+      logged_in? && User.find(decoded_token[:user_id]).is_admin
     end
 end

@@ -4,12 +4,14 @@ class ApplicationController < ActionController::API
   end
 
   def decoded_token
-    if auth_header
-      eval(JWT.decode(request.headers['Authentication'], ENV['SECRET_KEY_BASE'], true, { algorithm: 'HS256' })[0])
-    end
+    eval(JWT.decode(request.headers['Authentication'], ENV['SECRET_KEY_BASE'], true, { algorithm: 'HS256' })[0])
   end
 
   def auth_header
     !request.headers['Authentication'].nil?
+  end
+
+  def logged_in?
+    auth_header
   end
 end

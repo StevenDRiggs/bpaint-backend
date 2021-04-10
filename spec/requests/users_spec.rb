@@ -89,12 +89,97 @@ RSpec.describe "/users", type: :request do
   end
 
   describe "GET /show" do
-    it "renders a successful response" do
-      user = User.create! valid_attributes
+    context 'with admin logged in' do
+      before(:example) do
+        @admin_user = User.create!(username: 'admin', email: 'admin@admin.com', password: 'pass', is_admin: true)
+        @other_user = User.create!(username: 'other', email: 'other@admin.com', password: 'pass')
 
-      get user_url(user), as: :json
+        post '/login', params: {
+          user: {
+            usernameOrEmail: @admin_user.username,
+            password: 'pass',
+          }
+        }
 
-      expect(response).to be_successful
+        valid_headers['Authentication'] = eval(response.body)[:token]
+      end
+
+      it "renders a successful response" do
+        get user_url(@admin_user), headers: valid_headers, as: :json
+
+        expect(response).to have_http_status(:ok)
+
+        get user_url(@other_user), headers: valid_headers, as: :json
+
+        expect(response).to have_http_status(:ok)
+      end
+
+      it 'returns json describing the user' do
+        get user_url(@admin_user), headers: valid_headers, as: :json
+
+        expect(eval(response.body)).to include(username: @admin_user.username, email: @admin_user.email, is_admin: @admin_user.is_admin).and include(:flags)
+
+        get user_url(@other_user), headers: valid_headers, as: :json
+
+        expect(eval(response.body)).to include(username: @other_user.username, email: @other_user.email, is_admin: @other_user.is_admin).and include(:flags)
+      end
+    end
+
+    context 'with non-admin logged in' do
+      context "on user's own site" do
+        before(:example) do
+          @non_admin_user = User.create!(username: 'non-admin', email: 'non@admin.com', password: 'pass')
+
+          post '/login', params: {
+            user: {
+              usernameOrEmail: @non_admin_user.username,
+              password: 'pass',
+            }
+          }
+
+          valid_headers['Authentication'] = eval(response.body)[:token]
+        end
+
+        it "renders a successful response" do
+          get user_url(@non_admin_user), headers: valid_headers, as: :json
+
+          expect(response).to have_http_status(:ok)
+        end
+
+        it 'returns json describing the user' do
+          get user_url(@non_admin_user), headers: valid_headers, as: :json
+
+          expect(eval(response.body)).to include(username: @non_admin_user.username, email: @non_admin_user.email, is_admin: @non_admin_user.is_admin).and include(:flags)
+        end
+      end
+
+      context "on other user's site" do
+        before(:example) do
+          @non_admin_user = User.create!(username: 'non-admin', email: 'non@admin.com', password: 'pass')
+          @other_user = User.create!(username: 'other', email: 'other@admin.com', password: 'pass')
+
+          post '/login', params: {
+            user: {
+              usernameOrEmail: @non_admin_user.username,
+              password: 'pass',
+            }
+          }
+
+          valid_headers['Authentication'] = eval(response.body)[:token]
+        end
+
+        it "has :forbidden status" do
+          get user_url(@other_user), headers: valid_headers, as: :json
+
+          expect(response).to have_http_status(:forbidden)
+        end
+
+        fit 'returns json describing errors' do
+          get user_url(@other_user), headers: valid_headers, as: :json
+
+          expect(eval(response.body)).to include('Must be logged in as admin')
+        end
+      end
     end
   end
 
