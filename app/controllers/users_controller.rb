@@ -10,7 +10,9 @@ class UsersController < ApplicationController
 
       render json: @users
     else
-      render json: ['Must be logged in as admin'], status: :forbidden
+      render json: {
+        errors: ['Must be logged in as admin'],
+      }, status: :forbidden
     end
   end
 
@@ -19,7 +21,9 @@ class UsersController < ApplicationController
     if admin? || (logged_in? && params[:id].to_i == decoded_token[:user_id])
       render json: @user
     else
-      render json: ['Must be logged in as admin'], status: :forbidden
+      render json: {
+        errors: ['Must be logged in as admin'],
+      }, status: :forbidden
     end
   end
 
@@ -33,7 +37,9 @@ class UsersController < ApplicationController
         token: encoded_token,
       }, status: :created, location: @user
     else
-      render json: @user.errors, status: :unprocessable_entity
+      render json: {
+        errors: @user.errors.full_messages,
+      }, status: :unprocessable_entity
     end
   end
 
