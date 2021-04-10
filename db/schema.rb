@@ -56,6 +56,7 @@ ActiveRecord::Schema.define(version: 2021_04_09_213522) do
     t.string "url", null: false
     t.string "medium", null: false
     t.string "name", null: false
+    t.integer "user_id", null: false
     t.boolean "verified", default: false, null: false
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false

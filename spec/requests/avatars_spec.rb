@@ -12,52 +12,16 @@ RSpec.describe "/avatars", type: :request do
   let(:valid_attributes) {
     {
       url: 'https://picsum.photos/100/100',
-      name: Faker::Quote.famous_last_words.split[0..5].join('_').downcase.gsub(/[^a-z_]/, ''),
+      name: Faker::Movies::BackToTheFuture.character,
       user_id: user.id,
     }
   }
 
-  let(:invalid_url) {
-    'notaurl'
-  }
-
-  let(:invalid_name_blank) {
-    ''
-  }
-
-  let(:invalid_name_profane) {
-    'bitch'
-  }
-
-  let(:invalid_name_profane_leet) {
-    'b1tch'
-  }
-
-  let(:invalid_user_id) {
-    user.id + 1
-  }
-
-  let(:invalid_attributes_blank_name) {
+  let(:invalid_attributes) {
     {
-      url: invalid_url,
-      name: invalid_name_blank,
-      user_id: invalid_user_id,
-    }
-  }
-
-  let(:invalid_attributes_profane_name) {
-    {
-      url: invalid_url,
-      name: invalid_name_blank,
-      user_id: invalid_user_id,
-    }
-  }
-
-  let(:invalid_attributes_profane_name_leet) {
-    {
-      url: invalid_url,
-      name: invalid_name_blank,
-      user_id: invalid_user_id,
+      url: 'notaurl',
+      name: ['', 'bitch', 'b1tch'].sample,
+      user_id: user.id + 1,
     }
   }
 
@@ -105,30 +69,17 @@ RSpec.describe "/avatars", type: :request do
     context "with invalid parameters" do
       it "does not create a new Avatar" do
         expect {
-          post avatars_url, params: { avatar: invalid_attributes_blank_name }, as: :json
-        }.to change(Avatar, :count).by(0)
-
-        expect {
-          post avatars_url, params: { avatar: invalid_attributes_profane_name }, as: :json
-        }.to change(Avatar, :count).by(0)
-
-        expect {
-          post avatars_url, params: { avatar: invalid_attributes_profane_name_leet }, as: :json
+          post avatars_url, params: { avatar: invalid_attributes }, as: :json
         }.to change(Avatar, :count).by(0)
       end
 
       it "renders a JSON response with errors for the new avatar" do
-        post avatars_url, params: { avatar: invalid_attributes_blank_name }, headers: valid_headers, as: :json
+        post avatars_url, params: { avatar: invalid_attributes }, headers: valid_headers, as: :json
         expect(response).to have_http_status(:unprocessable_entity)
         expect(response.content_type).to match(a_string_including("application/json"))
-
-        post avatars_url, params: { avatar: invalid_attributes_profane_name }, headers: valid_headers, as: :json
-        expect(response).to have_http_status(:unprocessable_entity)
-        expect(response.content_type).to match(a_string_including("application/json"))
-
-        post avatars_url, params: { avatar: invalid_attributes_profane_name_leet }, headers: valid_headers, as: :json
-        expect(response).to have_http_status(:unprocessable_entity)
-        expect(response.content_type).to match(a_string_including("application/json"))
+        expect(eval(response.body)[:user]).to include('must exist')
+        expect(eval(response.body)[:url]).to include('is not a valid url')
+        expect(eval(response.body)[:name]).to include('cannot include profanity').or include("can't be blank").or include('must be at least 2 characters long')
       end
     end
   end
@@ -170,17 +121,12 @@ RSpec.describe "/avatars", type: :request do
       it "renders a JSON response with errors for the avatar" do
         avatar = Avatar.create! valid_attributes
 
-        patch avatar_url(avatar), params: { avatar: invalid_attributes_blank_name }, headers: valid_headers, as: :json
+        patch avatar_url(avatar), params: { avatar: invalid_attributes }, headers: valid_headers, as: :json
         expect(response).to have_http_status(:unprocessable_entity)
         expect(response.content_type).to match(a_string_including("application/json"))
-
-        patch avatar_url(avatar), params: { avatar: invalid_attributes_profane_name }, headers: valid_headers, as: :json
-        expect(response).to have_http_status(:unprocessable_entity)
-        expect(response.content_type).to match(a_string_including("application/json"))
-
-        patch avatar_url(avatar), params: { avatar: invalid_attributes_profane_name_leet }, headers: valid_headers, as: :json
-        expect(response).to have_http_status(:unprocessable_entity)
-        expect(response.content_type).to match(a_string_including("application/json"))
+        expect(eval(response.body)[:user]).to include('must exist')
+        expect(eval(response.body)[:url]).to include('is not a valid url')
+        expect(eval(response.body)[:name]).to include('cannot include profanity').or include("can't be blank").or include('must be at least 2 characters long')
       end
     end
   end
