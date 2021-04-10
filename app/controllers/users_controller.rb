@@ -5,9 +5,13 @@ class UsersController < ApplicationController
 
   # GET /users
   def index
-    @users = User.all
+    if User.find(decoded_token[:user_id]).is_admin
+      @users = User.all
 
-    render json: @users
+      render json: @users, status: :ok
+    else
+      render json: ['Must be logged in as admin'], status: :forbidden
+    end
   end
 
   # GET /users/1
@@ -20,8 +24,6 @@ class UsersController < ApplicationController
     @user = User.new(user_params)
 
     if @user.save
-      session[:user_id] = @user.id
-
       render json: {
         user: @user,
         token: encoded_token,
@@ -52,8 +54,6 @@ class UsersController < ApplicationController
     @user = User.find_by_username_or_email(user_params[:usernameOrEmail])
 
     if @user && @user.authenticate(user_params[:password])
-      session[:user_id] = @user.id
-
       render json: {
         user: @user,
         token: encoded_token,
@@ -61,11 +61,6 @@ class UsersController < ApplicationController
     else
       render json: ['User not found'], status: :unprocessable_entity
     end
-  end
-
-  # POST /logout
-  def logout
-    session.clear
   end
 
   private

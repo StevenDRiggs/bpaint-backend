@@ -26,26 +26,65 @@ RSpec.describe "/users", type: :request do
   # UsersController, or in your router and rack
   # middleware. Be sure to keep this updated too.
   let(:valid_headers) {
-    {}
+    {
+      'Content-Type': 'application/json',
+    }
   }
 
   describe "GET /index" do
-    it "renders a successful response" do
-      User.create! valid_attributes
+    context 'with admin logged in' do
+      before(:example) do
+        user = User.create!(username: 'admin', email: 'admin@admin.com', password: 'pass', is_admin: true)
 
-      get users_url, headers: valid_headers, as: :json
+        post '/login', params: {
+          user: {
+            usernameOrEmail: user.username,
+            password: 'pass',
+          }
+        }
 
-      expect(response).to be_successful
-    end
-
-    it 'returns json listing all users' do
-      3.times do |i|
-        User.create!(username: "#{valid_attributes[:username]}_#{i}", email: Faker::Internet.email(name: i), password: valid_attributes[:password])
+        valid_headers['Authentication'] = eval(response.body)[:token]
       end
 
-      get users_url, headers: valid_headers, as: :json
+      it "renders a successful response" do
+        User.create! valid_attributes
 
-      expect(eval(response.body).length).to eq(3)
+        get users_url, headers: valid_headers, as: :json
+
+        expect(response).to have_http_status(:ok)
+      end
+
+      it 'returns json listing all users' do
+        3.times do |i|
+          User.create!(username: "#{valid_attributes[:username]}_#{i}", email: Faker::Internet.email(name: i), password: valid_attributes[:password])
+        end
+
+        get users_url, headers: valid_headers, as: :json
+
+        expect(eval(response.body).length).to eq(4)
+      end
+    end
+
+    context 'with non-admin logged in' do
+      before(:example) do
+        user = User.create!(username: 'non-admin', email: 'nonadmin@nonadmin.com', password: 'pass')
+
+        post '/login', params: {
+          user: {
+            usernameOrEmail: user.username,
+            password: 'pass',
+          }
+        }
+
+        valid_headers['Authentication'] = eval(response.body)[:token]
+      end
+
+      it 'renders a JSON response with errors' do
+        get users_url, headers: valid_headers, as: :json
+
+        expect(response).to have_http_status(:forbidden)
+        expect(eval(response.body)).to include('Must be logged in as admin')
+      end
     end
   end
 
@@ -65,12 +104,6 @@ RSpec.describe "/users", type: :request do
         expect {
           post users_url, params: { user: valid_attributes }, headers: valid_headers, as: :json
         }.to change(User, :count).by(1)
-      end
-
-      it "sets the session key to the user's id" do
-          post users_url, params: { user: valid_attributes }, headers: valid_headers, as: :json
-
-          expect(session[:user_id]).to eq(eval(response.body)[:user][:id])
       end
 
       it "renders a JSON response with the new user" do
@@ -160,48 +193,18 @@ RSpec.describe "/users", type: :request do
         User.create!(username: 'login test', email: 'email@email.com', password: 'pass')
       }
 
-      it "sets the session key to the user's id" do
-        post '/login', params: {
-          user: {
-            usernameOrEmail: user.username,
-            password: 'pass'
-          },
-        }, headers: valid_headers, as: :json
-
-        expect(session[:user_id]).to eq(user.id)
-      end
-
       it "renders a JSON response with the logged in user" do
         post '/login', params: {
           user: {
             usernameOrEmail: user.email,
             password: 'pass'
           },
-         }, headers: valid_headers, as: :json
+        }, headers: valid_headers, as: :json
 
         expect(response).to have_http_status(:ok)
         expect(response.content_type).to match(a_string_including("application/json"))
         expect(eval(response.body)).to include(:user, :token)
       end
-    end
-  end
-
-  describe 'POST /logout' do
-    it 'clears the session' do
-      user = User.create!(username: 'logout test', email: 'email@email.com', password: 'pass')
-
-      post '/login', params: {
-        user: {
-          usernameOrEmail: user.username,
-          password: 'pass',
-        }
-      }, headers: valid_headers, as: :json
-
-      expect(session[:user_id]).to eq(user.id)
-
-      post '/logout'
-
-      expect(session[:user_id]).to be(nil)
     end
   end
 end
