@@ -32,6 +32,10 @@ RSpec.describe "/users", type: :request do
   }
 
   describe "GET /index" do
+    before(:context) do
+      User.destroy_all
+    end
+
     context 'with admin logged in' do
       before(:example) do
         user = User.create!(username: 'admin', email: 'admin@admin.com', password: 'pass', is_admin: true)
@@ -61,7 +65,8 @@ RSpec.describe "/users", type: :request do
 
         get users_url, headers: valid_headers, as: :json
 
-        expect(eval(response.body).length).to eq(4)
+        expect(eval(response.body)).to include(:users)
+        expect(eval(response.body)[:users].length).to eq(4)
       end
     end
 
@@ -118,11 +123,13 @@ RSpec.describe "/users", type: :request do
       it 'returns json describing the user' do
         get user_url(@admin_user), headers: valid_headers, as: :json
 
-        expect(eval(response.body)).to include(username: @admin_user.username, email: @admin_user.email, is_admin: @admin_user.is_admin).and include(:flags)
+        expect(eval(response.body)).to include(:user)
+        expect(eval(response.body)[:user]).to include(username: @admin_user.username, email: @admin_user.email, is_admin: @admin_user.is_admin).and include(:flags)
 
         get user_url(@other_user), headers: valid_headers, as: :json
 
-        expect(eval(response.body)).to include(username: @other_user.username, email: @other_user.email, is_admin: @other_user.is_admin).and include(:flags)
+        expect(eval(response.body)).to include(:user)
+        expect(eval(response.body)[:user]).to include(username: @other_user.username, email: @other_user.email, is_admin: @other_user.is_admin).and include(:flags)
       end
     end
 
@@ -150,7 +157,8 @@ RSpec.describe "/users", type: :request do
         it 'returns json describing the user' do
           get user_url(@non_admin_user), headers: valid_headers, as: :json
 
-          expect(eval(response.body)).to include(username: @non_admin_user.username, email: @non_admin_user.email, is_admin: @non_admin_user.is_admin).and include(:flags)
+          expect(eval(response.body)).to include(:user)
+          expect(eval(response.body)[:user]).to include(username: @non_admin_user.username, email: @non_admin_user.email, is_admin: @non_admin_user.is_admin).and include(:flags)
         end
       end
 
@@ -217,61 +225,100 @@ RSpec.describe "/users", type: :request do
         expect(eval(response.body)).to include(:errors)
         expect(eval(response.body)[:errors]).to include('Username cannot include profanity').or include('Username must be at least 2 characters long').or include("Username can't be blank")
         expect(eval(response.body)[:errors]).to include('Email is not a valid email')
-        expect(eval(response.body)[:errors]).to include('Password must not be the same as username').or include("Password can't be blank").or include('Password must be at least 1 character long')
       end
     end
   end
 
   xdescribe "PATCH /update" do
-    context "with valid parameters" do
-      let(:new_attributes) {
-        {
-          username: 'new test',
-          email: Faker::Internet.email(name: 'new test'),
-          password: 'new password',
+    context 'with admin user logged in' do
+      before(:context) do
+        @admin_user = User.create!(username: 'admin', email: 'admin@admin.com', password: 'pass', is_admin: true)
+        post '/login', params: {
+          user: {
+            usernameOrEmail: @admin_user.username,
+            password: 'pass',
+          }
         }
-      }
-
-      it "updates the requested user" do
-        user = User.create! valid_attributes
-
-        patch user_url(user), params: { user: new_attributes }, headers: valid_headers, as: :json
-
-        user.reload
-
-        expect(user.username).to eq(new_attributes[:username])
-        expect(user.authenticate(new_attributes[:password])).to be(user)
+        @valid_headers = {
+          'Authentication': eval(response.body)[:token],
+        }
+        @valid_new_attributes = {
+          user: {
+            username: 'new username',
+            email: 'new@email.com',
+            password: 'new pass',
+          }
+        }
       end
 
-      it "renders a JSON response with the user" do
-        user = User.create! valid_attributes
+      context 'with valid params' do
+        before(:example) do
+          @other_user = User.create!(username: 'other', email: 'other@admin.com', password: 'pass')
+        end
 
-        patch user_url(user), params: { user: new_attributes }, headers: valid_headers, as: :json
+        it 'renders a successful response' do
+          patch user_url(@other_user), headers: @valid_headers, params: @valid_new_attributes, as: :json
 
-        expect(response).to have_http_status(:ok)
-        expect(response.content_type).to match(a_string_including("application/json"))
+          expect(response).to have_http_status(:ok)
+        end
+
+        it 'updates user' do
+          patch user_url(@other_user), headers: @valid_headers, params: @valid_new_attributes, as: :json
+
+          @other_user.reload
+
+          expect(@other_user.username).to eq(@valid_new_attributes[:user][:username])
+          expect(@other_user.email).to eq(@valid_new_attributes[:user][:email])
+          expect(@other_user.authenticate(@valid_new_attributes[:user][:password])).to be(@other_user)
+        end
+
+        it 'renders json describing new user data' do
+          patch user_url(@other_user), headers: @valid_headers, params: @valid_new_attributes, as: :json
+
+          @other_user.reload
+
+          expect(eval(response.body)).to include(:user)
+          expect(eval(response.body)[:user]).to include(username: @other_user.username, email: @other_user.email)
+        end
+      end
+
+      context 'with invalid params' do
+        it 'does not update user' do
+
+        end
+
+        it 'renders json describing errors' do
+
+        end
       end
     end
 
-    context "with invalid parameters" do
-      it "renders a JSON response with errors for the user" do
-        user = User.create! valid_attributes
+    context 'with non-admin user logged in' do
+      it 'returns :forbidden status' do
 
-        patch user_url(user), params: { user: invalid_attributes }, headers: valid_headers, as: :json
+      end
 
-        expect(response).to have_http_status(:unprocessable_entity)
-        expect(response.content_type).to match(a_string_including("application/json"))
+      it 'does not update user' do
+
+      end
+
+      it 'renders json describing errors' do
+
       end
     end
-  end
 
-  xdescribe "DELETE /destroy" do
-    it "destroys the requested user" do
-      user = User.create! valid_attributes
+    context 'when not logged in' do
+      it 'returns :forbidden status' do
 
-      expect {
-        delete user_url(user), headers: valid_headers, as: :json
-      }.to change(User, :count).by(-1)
+      end
+
+      it 'does not update user' do
+
+      end
+
+      it 'renders json describing errors' do
+
+      end
     end
   end
 

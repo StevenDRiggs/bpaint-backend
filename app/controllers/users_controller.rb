@@ -8,7 +8,9 @@ class UsersController < ApplicationController
     if admin?
       @users = User.all
 
-      render json: @users
+      render json: {
+        users: @users,
+      }
     else
       render json: {
         errors: ['Must be logged in as admin'],
@@ -19,7 +21,9 @@ class UsersController < ApplicationController
   # GET /users/1
   def show
     if admin? || (logged_in? && params[:id].to_i == decoded_token[:user_id])
-      render json: @user
+      render json: {
+        user: @user,
+      }
     else
       render json: {
         errors: ['Must be logged in as admin'],
@@ -46,7 +50,9 @@ class UsersController < ApplicationController
   # PATCH/PUT /users/1
   def update
     if @user.update(user_params)
-      render json: @user
+      render json: {
+        user: @user,
+      }
     else
       render json: @user.errors, status: :unprocessable_entity
     end
