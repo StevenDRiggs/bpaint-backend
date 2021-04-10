@@ -46,6 +46,6 @@ class AvatarsController < ApplicationController
 
     # Only allow a list of trusted parameters through.
     def avatar_params
-      params.require(:avatar).permit(:url, :name, :verified)
+      params.require(:avatar).permit(:url, :name, :user_id, :verified)
     end
 end

@@ -28,8 +28,8 @@ gem 'rack-cors'
 # retrieve ENV variables from .env
 gem 'dotenv', '~> 2.7', '>= 2.7.6'
 
-# Adam Bair's profanity filter
-gem 'profanity_filter', '~> 0.1.1'
+# cardinalblue's profanity filter
+gem 'profanity-filter', '~> 1.0'
 
 group :development, :test do
   # Call 'binding.pry' anywhere in the code to stop execution and get a debugger console
@@ -37,6 +37,8 @@ group :development, :test do
   # use RSpec for testing
   gem 'rspec', '~> 3.10'
   gem 'rspec-rails', '~> 5.0.0'
+  # generate fake data for testing
+  gem 'faker', '~> 2.17'
 end
 
 group :development do
