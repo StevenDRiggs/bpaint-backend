@@ -9,23 +9,11 @@ RSpec.describe "/avatars", type: :request do
     User.create!(username: 'test', password: 'password')
   }
 
-  let(:valid_url) {
-    'https://picsum.photos/100/100'
-  }
-
-  let(:valid_name) {
-    Faker::Quote.famous_last_words.split[0..5].join('_').downcase.gsub(/[^a-z_]/, '')
-  }
-
-  let(:valid_user_id) {
-    user.id
-  }
-
   let(:valid_attributes) {
     {
-      url: valid_url,
-      name: valid_name,
-      user_id: valid_user_id,
+      url: 'https://picsum.photos/100/100',
+      name: Faker::Quote.famous_last_words.split[0..5].join('_').downcase.gsub(/[^a-z_]/, ''),
+      user_id: user.id,
     }
   }
 
@@ -47,6 +35,30 @@ RSpec.describe "/avatars", type: :request do
 
   let(:invalid_user_id) {
     user.id + 1
+  }
+
+  let(:invalid_attributes_blank_name) {
+    {
+      url: invalid_url,
+      name: invalid_name_blank,
+      user_id: invalid_user_id,
+    }
+  }
+
+  let(:invalid_attributes_profane_name) {
+    {
+      url: invalid_url,
+      name: invalid_name_blank,
+      user_id: invalid_user_id,
+    }
+  }
+
+  let(:invalid_attributes_profane_name_leet) {
+    {
+      url: invalid_url,
+      name: invalid_name_blank,
+      user_id: invalid_user_id,
+    }
   }
 
   # This should return the minimal set of values that should be in the headers
@@ -73,7 +85,7 @@ RSpec.describe "/avatars", type: :request do
     end
   end
 
-  describe "POST /create", focus: true do
+  describe "POST /create" do
     context "with valid parameters" do
       it "creates a new Avatar" do
         expect {
@@ -91,96 +103,48 @@ RSpec.describe "/avatars", type: :request do
     end
 
     context "with invalid parameters" do
-      context 'with invalid url' do
-        it "does not create a new Avatar" do
-          expect {
-            post avatars_url,
-            params: { avatar: {
-              url: invalid_url,
-              name: valid_name,
-              user_id: valid_user_id,
-            } }, as: :json
-          }.to change(Avatar, :count).by(0)
-        end
+      it "does not create a new Avatar" do
+        expect {
+          post avatars_url, params: { avatar: invalid_attributes_blank_name }, as: :json
+        }.to change(Avatar, :count).by(0)
 
-        it "renders a JSON response with errors for the new avatar" do
-          post avatars_url,
-            params: { avatar: {
-            url: invalid_url,
-            name: valid_name,
-            user_id: valid_user_id,
-          } }, headers: valid_headers, as: :json
-          expect(response).to have_http_status(:unprocessable_entity)
-          expect(response.content_type).to eq("application/json; charset=utf-8")
-        end
+        expect {
+          post avatars_url, params: { avatar: invalid_attributes_profane_name }, as: :json
+        }.to change(Avatar, :count).by(0)
+
+        expect {
+          post avatars_url, params: { avatar: invalid_attributes_profane_name_leet }, as: :json
+        }.to change(Avatar, :count).by(0)
       end
 
-      context 'with invalid name' do
-        it "does not create a new Avatar" do
-          expect {
-            post avatars_url,
-            params: { avatar: {
-              url: valid_url,
-              name: invalid_name_blank,
-              user_id: valid_user_id,
-            } }, as: :json
-          }.to change(Avatar, :count).by(0)
+      it "renders a JSON response with errors for the new avatar" do
+        post avatars_url, params: { avatar: invalid_attributes_blank_name }, headers: valid_headers, as: :json
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response.content_type).to match(a_string_including("application/json"))
 
-          expect {
-            post avatars_url,
-            params: { avatar: {
-              url: valid_url,
-              name: invalid_name_profane,
-              user_id: valid_user_id,
-            } }, as: :json
-          }.to change(Avatar, :count).by(0)
+        post avatars_url, params: { avatar: invalid_attributes_profane_name }, headers: valid_headers, as: :json
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response.content_type).to match(a_string_including("application/json"))
 
-          expect {
-            post avatars_url,
-            params: { avatar: {
-              url: valid_url,
-              name: invalid_name_profane_leet,
-              user_id: valid_user_id,
-            } }, as: :json
-          }.to change(Avatar, :count).by(0)
-        end
-
-        it "renders a JSON response with errors for the new avatar" do
-          post avatars_url,
-            params: { avatar: {
-            url: valid_url,
-            name: invalid_name_blank,
-            user_id: valid_user_id,
-          } }, headers: valid_headers, as: :json
-          expect(response).to have_http_status(:unprocessable_entity)
-          expect(response.content_type).to eq("application/json; charset=utf-8")
-
-          post avatars_url,
-            params: { avatar: {
-            url: valid_url,
-            name: invalid_name_profane,
-            user_id: valid_user_id,
-          } }, headers: valid_headers, as: :json
-          expect(response).to have_http_status(:unprocessable_entity)
-          expect(response.content_type).to eq("application/json; charset=utf-8")
-
-          post avatars_url,
-            params: { avatar: {
-            url: valid_url,
-            name: invalid_name_profane_leet,
-            user_id: valid_user_id,
-          } }, headers: valid_headers, as: :json
-          expect(response).to have_http_status(:unprocessable_entity)
-          expect(response.content_type).to eq("application/json; charset=utf-8")
-        end
+        post avatars_url, params: { avatar: invalid_attributes_profane_name_leet }, headers: valid_headers, as: :json
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response.content_type).to match(a_string_including("application/json"))
       end
     end
   end
 
   describe "PATCH /update" do
     context "with valid parameters" do
+      let(:new_user) {
+        User.create!(username: 'new test', password: 'password')
+      }
+
       let(:new_attributes) {
-        skip("Add a hash of attributes valid for your model")
+        {
+          url: 'https://picsum.photos/200/200',
+          name: Faker::Movies::HowToTrainYourDragon.character,
+          user_id: new_user.id,
+        }
       }
 
       it "updates the requested avatar" do
@@ -188,7 +152,9 @@ RSpec.describe "/avatars", type: :request do
         patch avatar_url(avatar),
           params: { avatar: new_attributes }, headers: valid_headers, as: :json
         avatar.reload
-        skip("Add assertions for updated state")
+        expect(avatar.url).to eq(new_attributes[:url])
+        expect(avatar.name).to eq(new_attributes[:name])
+        expect(avatar.user_id).to eq(new_attributes[:user_id])
       end
 
       it "renders a JSON response with the avatar" do
@@ -203,10 +169,18 @@ RSpec.describe "/avatars", type: :request do
     context "with invalid parameters" do
       it "renders a JSON response with errors for the avatar" do
         avatar = Avatar.create! valid_attributes
-        patch avatar_url(avatar),
-          params: { avatar: invalid_attributes }, headers: valid_headers, as: :json
+
+        patch avatar_url(avatar), params: { avatar: invalid_attributes_blank_name }, headers: valid_headers, as: :json
         expect(response).to have_http_status(:unprocessable_entity)
-        expect(response.content_type).to eq("application/json")
+        expect(response.content_type).to match(a_string_including("application/json"))
+
+        patch avatar_url(avatar), params: { avatar: invalid_attributes_profane_name }, headers: valid_headers, as: :json
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response.content_type).to match(a_string_including("application/json"))
+
+        patch avatar_url(avatar), params: { avatar: invalid_attributes_profane_name_leet }, headers: valid_headers, as: :json
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response.content_type).to match(a_string_including("application/json"))
       end
     end
   end
