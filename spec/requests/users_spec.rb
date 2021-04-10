@@ -185,4 +185,23 @@ RSpec.describe "/users", type: :request do
       end
     end
   end
+
+  describe 'POST /logout' do
+    it 'clears the session' do
+      user = User.create!(username: 'logout test', email: 'email@email.com', password: 'pass')
+
+      post '/login', params: {
+        user: {
+          usernameOrEmail: user.username,
+          password: 'pass',
+        }
+      }, headers: valid_headers, as: :json
+
+      expect(session[:user_id]).to eq(user.id)
+
+      post '/logout'
+
+      expect(session[:user_id]).to be(nil)
+    end
+  end
 end

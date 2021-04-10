@@ -30,5 +30,9 @@ RSpec.describe UsersController, type: :routing do
     it 'routes to #login' do
       expect(post: '/login').to route_to('users#login')
     end
+
+    it 'routes to #logout' do
+      expect(post: '/logout').to route_to('users#logout')
+    end
   end
 end
