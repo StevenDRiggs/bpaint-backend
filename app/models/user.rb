@@ -8,7 +8,7 @@ class User < ApplicationRecord
 
   validates :username, name: true, profanity_filter: true
   validates :email, presence: true, email: true
-  validates :password, password: true
+  validates :password, presence: true, password: true
 
 
   def as_json(options={})

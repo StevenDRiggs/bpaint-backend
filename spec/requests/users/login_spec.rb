@@ -84,7 +84,7 @@ RSpec.describe 'POST /login' do
       expect(response).to have_http_status(:unprocessable_entity)
     end
 
-    fit 'renders json for errors' do
+    it 'renders json for errors' do
       post '/login', params: invalid_params
 
       expect(eval(response.body)).to include(:errors)

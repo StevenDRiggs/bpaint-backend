@@ -65,7 +65,7 @@ RSpec.describe "POST /users", type: :request do
     it 'renders json for errors' do
       post users_path, params: invalid_params
 
-      # exact error messages are tested in models/users/validations_spec.rb
+      # exact error messages are tested in models/user/validations_spec.rb
       expect(eval(response.body)).to include(:errors)
     end
   end
