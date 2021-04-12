@@ -10,6 +10,12 @@ class User < ApplicationRecord
   validates :email, presence: true, email: true
   validates :password, password: true
 
+
+  def as_json(options={})
+     options[:except] ||= [:id, :created_at, :updated_at, :password_digest]
+     super(options)
+   end
+
   def self.find_by_username_or_email(username_or_email)
     user = self.find_by(username: username_or_email)
 

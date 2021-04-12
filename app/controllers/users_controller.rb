@@ -13,20 +13,20 @@ class UsersController < ApplicationController
       }
     else
       render json: {
-        errors: ['Must be logged in as admin'],
+        errors: ['Must be logged in as admin to view all users'],
       }, status: :forbidden
     end
   end
 
-  # GET /users/1
+  # GET /users/:id
   def show
-    if admin? || (logged_in? && params[:id].to_i == decoded_token[:user_id])
+    if admin? || (logged_in? && @user.id == decoded_token[:user_id])
       render json: {
         user: @user,
       }
     else
       render json: {
-        errors: ['Must be logged in as admin'],
+        errors: ['Must be logged in as admin to view other users'],
       }, status: :forbidden
     end
   end
@@ -49,18 +49,64 @@ class UsersController < ApplicationController
 
   # PATCH/PUT /users/1
   def update
-    if @user.update(user_params)
-      render json: {
-        user: @user,
-      }
+    if admin? || (logged_in? && @user.id == decoded_token[:user_id])
+      if @user.update(user_params)
+        render json: {
+          user: @user,
+        }
+      else
+        render json: {
+          errors: @user.errors.full_messages,
+        }, status: :unprocessable_entity
+      end
     else
-      render json: @user.errors, status: :unprocessable_entity
+      render json: {
+        errors: ['Must be logged in as admin to update other profiles'],
+      }, status: :forbidden
     end
   end
 
   # DELETE /users/1
   def destroy
-    @user.destroy
+    if admin?
+      if @user.is_admin
+        if @user.flags['DELETE_USER']
+          username = @user.username
+
+          @user.destroy
+
+          render json: {
+            user: "DELETED #{username}",
+          }
+        else
+          @user.update_attribute(:flags, {'DELETE_USER' => true})
+
+          render json: {
+            user: @user
+          }
+        end
+      else
+        username = @user.username
+
+        @user.destroy
+
+        render json: {
+          user: "DELETED #{username}",
+        }
+      end
+    else
+      if logged_in? && @user.id == decoded_token[:user_id]
+        @user.update_attribute(:flags, {'DELETE_USER' => true})
+
+        render json: {
+          user: @user
+        }
+      else
+        render json: {
+          errors: ['Must be logged in as admin to delete other profiles'],
+        }, status: :forbidden
+      end
+    end
   end
 
   # non-RESTful routes
@@ -75,7 +121,9 @@ class UsersController < ApplicationController
         token: encoded_token,
       }, status: :ok
     else
-      render json: ['User not found'], status: :unprocessable_entity
+      render json: {
+        errors: ['User not found']
+      }, status: :unprocessable_entity
     end
   end
 
