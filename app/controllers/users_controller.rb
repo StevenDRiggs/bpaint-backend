@@ -137,9 +137,4 @@ class UsersController < ApplicationController
     def user_params
       params.require(:user).permit(:username, :email, :usernameOrEmail, :password, :flags, :is_admin)
     end
-
-    # verify @user.is_admin and logged in for certain functions
-    def admin?
-      logged_in? && User.find(decoded_token[:user_id]).is_admin
-    end
 end

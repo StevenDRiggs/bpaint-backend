@@ -14,4 +14,9 @@ class ApplicationController < ActionController::API
   def logged_in?
     auth_header
   end
+
+  # verify @user.is_admin and logged in for certain functions
+  def admin?
+    logged_in? && User.find(decoded_token[:user_id]).is_admin
+  end
 end

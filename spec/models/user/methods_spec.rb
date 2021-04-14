@@ -23,7 +23,7 @@ RSpec.describe User do
   end
 
   describe 'instance methods' do
-    describe 'as_json (overwrite)' do
+    describe '#as_json (overwrite)' do
       let(:user) {
         User.create!(username: 'user', email: 'user@email.com', password: 'pass')
       }

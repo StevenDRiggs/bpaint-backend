@@ -3,24 +3,52 @@ class AvatarsController < ApplicationController
 
   # GET /avatars
   def index
-    @avatars = Avatar.all
+    if admin?
+      @verified = Avatar.all.where(verified: true)
+      @unverified = Avatar.all.where(verified: false)
 
-    render json: @avatars
+      render json: {
+        avatars: {
+          verified: @verified,
+          unverified: @unverified,
+        },
+      }
+    else
+      render json: {
+        errors: ['Must be logged in as admin to view all avatars'],
+      }, status: :forbidden
+    end
   end
 
   # GET /avatars/1
   def show
-    render json: @avatar
+    if @avatar.verified
+      render json: {
+        avatar: @avatar,
+      }
+    else
+      render json: {
+        avatar: 'unverified',
+      }
+    end
   end
 
   # POST /avatars
   def create
-    @avatar = Avatar.new(avatar_params)
+    if logged_in? && avatar_params[:user_id].to_i == decoded_token[:user_id]
+      @avatar = Avatar.new(avatar_params)
 
-    if @avatar.save
-      render json: @avatar, status: :created, location: @avatar
+      if @avatar.save
+        render json: {
+          avatar: @avatar,
+        }, status: :created, location: @avatar
+      else
+        render json: @avatar.errors, status: :unprocessable_entity
+      end
     else
-      render json: @avatar.errors, status: :unprocessable_entity
+      render json: {
+        errors: ['May only create own avatar'],
+      }, status: :forbidden
     end
   end
 

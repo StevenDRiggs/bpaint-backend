@@ -18,7 +18,7 @@ RSpec.describe "GET /users", type: :request do
       }
     end
 
-    it 'has an :ok status' do
+    it 'succeeds' do
       get users_path, headers: @valid_headers
 
       expect(response).to have_http_status(:ok)
@@ -63,7 +63,7 @@ RSpec.describe "GET /users", type: :request do
       }
     end
 
-    it 'has a :forbidden status' do
+    it 'is forbidden' do
       get users_path, headers: @valid_headers
 
       expect(response).to have_http_status(:forbidden)
@@ -84,7 +84,7 @@ RSpec.describe "GET /users", type: :request do
   end
 
   context 'when not logged in' do
-    it 'has a :forbidden status' do
+    it 'is forbidden' do
       get users_path
 
       expect(response).to have_http_status(:forbidden)

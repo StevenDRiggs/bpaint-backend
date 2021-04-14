@@ -19,6 +19,20 @@ RSpec.describe User, type: :model do
     remove_instance_variable(:@valid_password)
   end
 
+  context 'with valid_params' do
+    it 'creates user' do
+      user = User.new(@valid_params)
+
+      expect(user.save).to be(true)
+    end
+
+    it 'updates user' do
+      user = User.new(username: 'also valid', email: 'also@valid.com', password: 'pass')
+
+      expect(user.update(@valid_params)).to be(true)
+    end
+  end
+
   context 'with invalid params' do
     context 'when validating username' do
       before(:context) do
@@ -221,20 +235,6 @@ RSpec.describe User, type: :model do
           expect(user.update(@invalid_params)).to be(false)
         end
       end
-    end
-  end
-
-  context 'with valid_params' do
-    it 'creates user' do
-      user = User.new(@valid_params)
-
-      expect(user.save).to be(true)
-    end
-
-    it 'updates user' do
-      user = User.new(username: 'also valid', email: 'also@valid.com', password: 'pass')
-
-      expect(user.update(@valid_params)).to be(true)
     end
   end
 end
