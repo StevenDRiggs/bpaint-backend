@@ -42,6 +42,8 @@ RSpec.describe 'POST /avatars' do
     it 'creates avatar' do
       post avatars_path, headers: @valid_headers, params: @av_params
 
+      @self_user.reload
+
       expect(@self_user.avatar).to eq(Avatar.last)
     end
 
@@ -71,6 +73,8 @@ RSpec.describe 'POST /avatars' do
 
     it 'does not create avatar' do
       post avatars_path, headers: @valid_headers, params: @av_params
+
+      other_user.reload
       
       expect(other_user.avatar).to be(nil)
     end
@@ -96,6 +100,8 @@ RSpec.describe 'POST /avatars' do
 
     it 'does not create avatar' do
       post avatars_path, params: @av_params
+
+      @self_user.reload
 
       expect(@self_user.avatar).to be(nil)
     end

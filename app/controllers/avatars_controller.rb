@@ -54,10 +54,18 @@ class AvatarsController < ApplicationController
 
   # PATCH/PUT /avatars/1
   def update
-    if @avatar.update(avatar_params)
-      render json: @avatar
+    if logged_in? && @avatar.user_id == decoded_token[:user_id]
+      if @avatar.update(avatar_params)
+        render json: {
+          avatar: @avatar,
+        }
+      else
+        render json: @avatar.errors, status: :unprocessable_entity
+      end
     else
-      render json: @avatar.errors, status: :unprocessable_entity
+      render json: {
+        errors: ['May only update own avatar'],
+      }, status: :forbidden
     end
   end
 
