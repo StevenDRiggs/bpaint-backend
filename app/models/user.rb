@@ -6,8 +6,8 @@ class User < ApplicationRecord
   has_many :recipes
   has_many :colors
 
-  validates :username, name: true, profanity_filter: true
-  validates :email, presence: true, email: true
+  validates :username, name: true, profanity_filter: true, uniqueness: true
+  validates :email, presence: true, email: true, uniqueness: true
   validates :password, presence: true, password: true
 
 

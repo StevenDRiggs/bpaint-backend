@@ -237,4 +237,11 @@ RSpec.describe User, type: :model do
       end
     end
   end
+
+  it 'validates uniqueness' do
+    User.create!(username: 'user1', email: 'user1@email.com', password: 'pass')
+    user2 = User.create!(username: 'user2', email: 'user2@email.com', password: 'pass')
+
+    expect(user2.update(username: 'user1', email: 'user1@email.com', password: 'pass')).to be(false)
+  end
 end
