@@ -71,7 +71,17 @@ class AvatarsController < ApplicationController
 
   # DELETE /avatars/1
   def destroy
-    @avatar.destroy
+    if admin? || (logged_in? && @avatar.user.id == decoded_token[:user_id])
+      @avatar.destroy
+
+      render json: {
+        avatar: 'DELETED',
+      }
+    else
+      render json: {
+        errors: ['Must be logged in as admin to delete other avatars'],
+      }, status: :forbidden
+    end
   end
 
   private
