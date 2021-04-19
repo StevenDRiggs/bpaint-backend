@@ -3,14 +3,22 @@ class PackagesController < ApplicationController
 
   # GET /packages
   def index
-    @packages = Package.all
+    if logged_in?
+      @packages = Package.where.not(privacy_mode: 'PRIVATE') + Package.where(privacy_mode: 'PRIVATE').where(creator_id: decoded_token[:user_id])
+    else
+      @packages = Package.where.not(privacy_mode: 'PRIVATE')
+    end
 
-    render json: @packages
+    render json: {
+      packages: @packages,
+    }
   end
 
   # GET /packages/1
   def show
-    render json: @package
+    render json: {
+      package: @package,
+    }
   end
 
   # POST /packages
