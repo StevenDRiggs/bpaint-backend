@@ -1,0 +1,3 @@
+[submodule "base_api"]
+	path = base_api
+	url = git@github.com:StevenDRiggs/bpaint-base-api.git
